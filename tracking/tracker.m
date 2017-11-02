@@ -17,8 +17,9 @@ function bboxes = tracker(varargin)
     p.wInfluence = 0.176; % windowing influence (in convex sum)
     p.net = '2016-08-17.net.mat';
     %% execution, visualization, benchmark
-    p.video = 'vot15_bag';
-    p.visualization = false;
+%    p.video = 'vot15_bag';
+    p.video = 'test_1030';
+    p.visualization = true;  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%test : false->true 
     p.gpus = 1;
     p.bbox_output = false;
     p.fout = -1;
@@ -46,9 +47,10 @@ function bboxes = tracker(varargin)
     if exist(p.stats_path,'file')
         stats = load(p.stats_path);
     else
-        warning('No stats found at %s', p.stats_path);
+%        warning('No stats found at %s', p.stats_path);
         stats = [];
     end
+    
     % Load two copies of the pre-trained network
     net_z = load_pretrained([p.net_base_path p.net], p.gpus);
     net_x = load_pretrained([p.net_base_path p.net], []);
@@ -65,7 +67,11 @@ function bboxes = tracker(varargin)
     zFeatId = net_z.getVarIndex(p.id_feat_z);
     scoreId = net_x.getVarIndex(p.id_score);
     % get the first frame of the video
-    im = gpuArray(single(imgFiles{startFrame}));
+    
+ %   im = gpuArray(single(imgFiles{startFrame}));
+    im = imresize(imgFiles{startFrame},[600, 800]);
+    im = gpuArray(im);
+ %   im = imresize(im,[600,800]);
     % if grayscale repeat one channel to match filters size
 	if(size(im, 3)==1)
         im = repmat(im, [1 1 3]);
@@ -78,21 +84,27 @@ function bboxes = tracker(varargin)
     % get avg for padding
     avgChans = gather([mean(mean(im(:,:,1))) mean(mean(im(:,:,2))) mean(mean(im(:,:,3)))]);
 
-    wc_z = targetSize(2) + p.contextAmount*sum(targetSize);
-    hc_z = targetSize(1) + p.contextAmount*sum(targetSize);
-    s_z = sqrt(wc_z*hc_z);
-    scale_z = p.exemplarSize / s_z;
+    wc_z = targetSize(:,2) + p.contextAmount*sum(targetSize,2); %numDet
+    hc_z = targetSize(:,1) + p.contextAmount*sum(targetSize,2); %numDet 
+    s_z = sqrt(wc_z.*hc_z);  %numDet
+    scale_z = p.exemplarSize ./ s_z;  %numDet
     % initialize the exemplar
-    [z_crop, ~] = get_subwindow_tracking(im, targetPosition, [p.exemplarSize p.exemplarSize], [round(s_z) round(s_z)], avgChans);
-    if p.subMean
-        z_crop = bsxfun(@minus, z_crop, reshape(stats.z.rgbMean, [1 1 3]));
+    
+    numDet = length(wc_z);  %numDet
+    z_crop = zeros(p.exemplarSize,p.exemplarSize,3,numDet,'single');
+    z_crop = gpuArray(z_crop);
+    for k=1:numDet
+        [z_crop(:,:,:,k), ~] = get_subwindow_tracking(im, targetPosition(k,:), [p.exemplarSize p.exemplarSize], [round(s_z(k,:)) round(s_z(k,:))], avgChans);
     end
+%    if p.subMean
+%        z_crop = bsxfun(@minus, z_crop, reshape(stats.z.rgbMean, [1 1 3]));
+%    end
     d_search = (p.instanceSize - p.exemplarSize)/2;
-    pad = d_search/scale_z;
-    s_x = s_z + 2*pad;
+    pad = d_search./scale_z; %numDet
+    s_x = s_z + 2*pad; %numDet
     % arbitrary scale saturation
-    min_s_x = 0.2*s_x;
-    max_s_x = 5*s_x;
+    min_s_x = 0.2*s_x; %numDet
+    max_s_x = 5*s_x; %numDet
 
     switch p.windowing
         case 'cosine'
@@ -104,61 +116,69 @@ function bboxes = tracker(varargin)
     window = window / sum(window(:));
     scales = (p.scaleStep .^ ((ceil(p.numScale/2)-p.numScale) : floor(p.numScale/2)));
     % evaluate the offline-trained network for exemplar z features
-    net_z.eval({'exemplar', z_crop});
-    z_features = net_z.vars(zFeatId).value;
-    z_features = repmat(z_features, [1 1 1 p.numScale]);
-
-    bboxes = zeros(nImgs, 4);
+    
+    for k=1:numDet
+        net_z.eval({'exemplar', z_crop(:,:,:,k)});
+        z_features_temp = net_z.vars(zFeatId).value;
+        z_features(:,:,:,:,k) = repmat(z_features_temp, [1 1 1 p.numScale]);    %numDet
+    end
+    
+    bboxes = zeros(nImgs, numDet, 4);
     % start tracking
     tic;
     for i = startFrame:nImgs
         if i>startFrame
             % load new frame on GPU
-            im = gpuArray(single(imgFiles{i}));
-   			% if grayscale repeat one channel to match filters size
+            %im = gpuArray(single(imgFiles{i}));
+            im = imresize(imgFiles{i},[600, 800]);
+            im = gpuArray(im);  
+            % if grayscale repeat one channel to match filters size
     		if(size(im, 3)==1)
         		im = repmat(im, [1 1 3]);
     		end
-            scaledInstance = s_x .* scales;
-            scaledTarget = [targetSize(1) .* scales; targetSize(2) .* scales];
+            scaledInstance = s_x * scales;  % numDet*numScale
+            scaledTarget(:,:,1) = [targetSize(:,1) * scales];  % numDet*numScale
+            scaledTarget(:,:,2) = [targetSize(:,2) * scales];  % numDet*numScale
+            
             % extract scaled crops for search region x at previous target position
-            x_crops = make_scale_pyramid(im, targetPosition, scaledInstance, p.instanceSize, avgChans, stats, p);
-            % evaluate the offline-trained network for exemplar x features
-            [newTargetPosition, newScale] = tracker_eval(net_x, round(s_x), scoreId, z_features, x_crops, targetPosition, window, p);
-            targetPosition = gather(newTargetPosition);
-            % scale damping and saturation
-            s_x = max(min_s_x, min(max_s_x, (1-p.scaleLR)*s_x + p.scaleLR*scaledInstance(newScale)));
-            targetSize = (1-p.scaleLR)*targetSize + p.scaleLR*[scaledTarget(1,newScale) scaledTarget(2,newScale)];
+           % x_crops = zeros(p.intanceSize,p.intanceSize,3, p.numScale, numDet,'single');
+           % x_crops = gpuArray(x_crops);
+           
+           for k=1:numDet
+                x_crops = make_scale_pyramid(im, targetPosition(k,:), scaledInstance(k,:), p.instanceSize, avgChans, stats, p);
+            
+                % evaluate the offline-trained network for exemplar x features
+            
+                [newTargetPosition, newScale] = tracker_eval(net_x, round(s_x(k,:)), scoreId, z_features(:,:,:,:,k), x_crops, targetPosition(k,:), window, p);
+                targetPosition(k,:) = gather(newTargetPosition);
+                % scale damping and saturation
+                s_x(k,:) = max(min_s_x(k,:), min(max_s_x(k,:), (1-p.scaleLR)*s_x(k,:) + p.scaleLR*scaledInstance(k,newScale)));
+                targetSize(k,:) = (1-p.scaleLR)*targetSize(k,:) + p.scaleLR*[scaledTarget(k,newScale,1) scaledTarget(k,newScale,2)];
+            end
         else
             % at the first frame output position and size passed as input (ground truth)
         end
 
-        rectPosition = [targetPosition([2,1]) - targetSize([2,1])/2, targetSize([2,1])];
-        % output bbox in the original frame coordinates
-        oTargetPosition = targetPosition; % .* frameSize ./ newFrameSize;
-        oTargetSize = targetSize; % .* frameSize ./ newFrameSize;
-        bboxes(i, :) = [oTargetPosition([2,1]) - oTargetSize([2,1])/2, oTargetSize([2,1])];
-
-        if p.visualization
-            if isempty(videoPlayer)
-                figure(1), imshow(im/255);
-                figure(1), rectangle('Position', rectPosition, 'LineWidth', 4, 'EdgeColor', 'y');
-                drawnow
-                fprintf('Frame %d\n', startFrame+i);
-            else
-                im = gather(im)/255;
-                im = insertShape(im, 'Rectangle', rectPosition, 'LineWidth', 4, 'Color', 'yellow');
-                % Display the annotated video frame using the video player object.
-                step(videoPlayer, im);
-            end
-        end
-
-        if p.bbox_output
-            fprintf(p.fout,'%.2f,%.2f,%.2f,%.2f\n', bboxes(i, :));
-        end
+        rectPosition = [[targetPosition(:,2),targetPosition(:,1)] - [targetSize(:,2),targetSize(:,1)] / 2, [targetSize(:,2) , targetSize(:,1)]];
+        
+        bboxes(i, :, :)=rectPosition;
 
     end
+        %% Visualization
+        video_path = [p.seq_base_path '/' p.video '/imgs/'];
+        imgs = dir([video_path '*.jpg']);
+            for i=1:nImgs
 
-    bboxes = bboxes(startFrame : i, :);
-
+                img = imread(imgs(i).name);
+                img = imresize(img, [600, 800]);               
+     
+                figure(i)
+                imshow(img)
+                for j=1:numDet
+                    figure(i)
+                    rectangle('Position',bboxes(i,j,:),'EdgeColor','r');
+                end
+           end
+           drawnow
+    save tracker
 end
