@@ -1,5 +1,5 @@
 % -------------------------------------------------------------------------------------------------
-function [imgs, pos, target_sz] = load_video_info(base_path, video)
+function [imgs, pos, target_sz, classId] = load_video_info(base_path, video)
 %LOAD_VOT_VIDEO_INFO
 %   Loads all the relevant information for the video in the given path:
 %   the list of image files (cell array of strings), initial position
@@ -30,6 +30,7 @@ function [imgs, pos, target_sz] = load_video_info(base_path, video)
     numDet = length(index);
     pos=zeros(numDet,2);
     target_sz=zeros(numDet,2);
+    classId = zeros(numDet,1);
     for i=1:numDet
         aa= a(index(i),:);     
         l=aa(1);t=aa(2);w=aa(3);h=aa(4);
@@ -37,7 +38,9 @@ function [imgs, pos, target_sz] = load_video_info(base_path, video)
     
         pos(i,:) = [cy cx]; % centre of the bounding box
         target_sz(i,:) = [h w];
+        classId(i,:) = aa(5);
     end
+    
     
 	%load all jpg files in the folder
 	img_files = dir([video_path '*.jpg']);
