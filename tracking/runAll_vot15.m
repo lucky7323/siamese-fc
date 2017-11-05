@@ -1,38 +1,36 @@
+video_path = '/home/eunho/vision_project/OD_fromVideo/siamese-fc/demo-sequences/test_1030/imgs/';
+
 %load all jpg files in the folder
-	img_files = dir([video_path '*.jpg']);
-	assert(~isempty(img_files), 'No image files to load.')
-	img_files = sort({img_files.name});
+img_files = dir([video_path '*.jpg']);
+assert(~isempty(img_files), 'No image files to load.')
+img_files = sort({img_files.name});
 
-	%eliminate frame 0 if it exists, since frames should only start at 1
-	img_files(strcmp('00000000.jpg', img_files)) = [];
-    img_files = strcat(video_path, img_files);
-    % read all frames at once
-    imgs = vl_imreadjpeg(img_files,'numThreads', 12);
-    
-numImg=length(imgs);    
-for i=1:numImg
-    if mod(i,3)==1
-        faster_rcnn(imgs(i));
-    else
-        setting
-        tracker
-%frame Num%3==1
-faster
-else
-    setting
-    siamese
-end
+%eliminate frame 0 if it exists, since frames should only start at 1
+img_files(strcmp('00000000.jpg', img_files)) = [];
+img_files = strcat(video_path, img_files);
 
+% read all frames at once
+imgs = vl_imreadjpeg(img_files,'numThreads', 12);
 
-
+%For Siamese-CNN
 startup;
-%% Parameters that should have no effect on the result.
-params.video = 'test_1030';
-params.visualization = 1;
-params.gpus = 1;
-%% Call the main tracking function
-tracker(params);   
-    
+
+%%
+numImg=length(imgs);    
+ii=1;
+while ii<=numImg
+    if mod(ii,3)==1
+        ii=ii+1;
+%        load /home/eunho/vision_project/OD_fromVideo/faster_rcnn/a.mat
+%        targetDet = a;
+%        targetDet=faster_rcnn(imgs(i)); %(a.mat)
+         targetDet=script_faster_rcnn_demo(imgs(ii));
+    else
+        [pos, target_sz, classId]=load_video_info(targetDet);
+        tracker(pos, target_sz, classId, imgs(ii:ii+1));
+        ii=ii+2;
+    end
+end
 
 %    seq={
 %     'test_1030'

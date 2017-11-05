@@ -1,11 +1,7 @@
 % -------------------------------------------------------------------------------------------------
-function bboxes = tracker(varargin)
+function bboxes = tracker(targetPosition, targetSize, targetClass, imgFiles, varargin)
 
 legends = {'aeroplane';'bicycle';'bird';'boat';'bottle';'bus';'car';'cat';'chair';'cow';'diningtable';'dog';'horse';'motorbike';'person';'pottedplant';'sheep';'sofa';'train';'tvmonitor'};
-colors_candidate = colormap('hsv');
-            colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/20)):end, :);
-            colors_candidate = mat2cell(colors_candidate, ones(size(colors_candidate, 1), 1))';
-            colors = colors_candidate;
             
 %TRACKER
 %   is the main function that performs the tracking loop
@@ -45,7 +41,7 @@ colors_candidate = colormap('hsv');
     p.id_feat_z = 'a_feat';
     p.id_score = 'score';
     % Overwrite default parameters with varargin
-    p = vl_argparse(p, varargin);
+%   p = vl_argparse(p, varargin);
 % -------------------------------------------------------------------------------------------------
 
     % Get environment-specific default paths.
@@ -61,7 +57,7 @@ colors_candidate = colormap('hsv');
     % Load two copies of the pre-trained network
     net_z = load_pretrained([p.net_base_path p.net], p.gpus);
     net_x = load_pretrained([p.net_base_path p.net], []);
-    [imgFiles, targetPosition, targetSize, targetClass] = load_video_info(p.seq_base_path, p.video);
+ %   [imgFiles, targetPosition, targetSize, targetClass] = load_video_info(p.seq_base_path, p.video);
     nImgs = numel(imgFiles);
     startFrame = 1;
     % Divide the net in 2
@@ -136,15 +132,7 @@ colors_candidate = colormap('hsv');
             colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/20)):end, :);
             colors_candidate = mat2cell(colors_candidate, ones(size(colors_candidate, 1), 1))';
             colors = colors_candidate;
-            
-       colors_candidate = colormap('hsv');
-            colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/20)):end, :);
-            colors_candidate = mat2cell(colors_candidate, ones(size(colors_candidate, 1), 1))';
-            colors = colors_candidate;     
-            
-            
-            
-            
+                                                             
     for i = startFrame:nImgs
         if i>startFrame
             % load new frame on GPU
@@ -195,7 +183,7 @@ colors_candidate = colormap('hsv');
                 imshow(img)
                 for j=1:numDet
                     figure(i)
-                    rectangle('Position',bboxes(i,j,:),'LineWidth', 2,'EdgeColor','r');
+                    rectangle('Position',bboxes(i,j,:),'LineWidth', 2,'EdgeColor',colors{targetClass(j,1)});
                     label = sprintf('%s', legends{targetClass(j,1)});
                     text(double(bboxes(i,j,1))+2, double(bboxes(i,j,2)), label, 'BackgroundColor', 'w');
                 end

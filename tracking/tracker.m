@@ -1,5 +1,5 @@
 % -------------------------------------------------------------------------------------------------
-function bboxes = tracker(varargin)
+function bboxes = tracker(targetPosition, targetSize, targetClass, imgFiles)
 
 legends = {'aeroplane';'bicycle';'bird';'boat';'bottle';'bus';'car';'cat';'chair';'cow';'diningtable';'dog';'horse';'motorbike';'person';'pottedplant';'sheep';'sofa';'train';'tvmonitor'};
             
@@ -22,7 +22,7 @@ legends = {'aeroplane';'bicycle';'bird';'boat';'bottle';'bus';'car';'cat';'chair
     %% execution, visualization, benchmark
 %    p.video = 'vot15_bag';
     p.video = 'test_1030';
-    p.visualization = true;  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%test : false->true 
+    p.visualization = false;  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%test : false->true 
     p.gpus = 1;
     p.bbox_output = false;
     p.fout = -1;
@@ -41,7 +41,7 @@ legends = {'aeroplane';'bicycle';'bird';'boat';'bottle';'bus';'car';'cat';'chair
     p.id_feat_z = 'a_feat';
     p.id_score = 'score';
     % Overwrite default parameters with varargin
-    p = vl_argparse(p, varargin);
+%   p = vl_argparse(p, varargin);
 % -------------------------------------------------------------------------------------------------
 
     % Get environment-specific default paths.
@@ -57,7 +57,7 @@ legends = {'aeroplane';'bicycle';'bird';'boat';'bottle';'bus';'car';'cat';'chair
     % Load two copies of the pre-trained network
     net_z = load_pretrained([p.net_base_path p.net], p.gpus);
     net_x = load_pretrained([p.net_base_path p.net], []);
-    [imgFiles, targetPosition, targetSize, targetClass] = load_video_info(p.seq_base_path, p.video);
+ %   [imgFiles, targetPosition, targetSize, targetClass] = load_video_info(p.seq_base_path, p.video);
     nImgs = numel(imgFiles);
     startFrame = 1;
     % Divide the net in 2
