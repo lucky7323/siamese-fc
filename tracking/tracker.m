@@ -1,8 +1,6 @@
 % -------------------------------------------------------------------------------------------------
-function bboxes = tracker(targetPosition, targetSize, targetClass, imgFiles)
-
-legends = {'aeroplane';'bicycle';'bird';'boat';'bottle';'bus';'car';'cat';'chair';'cow';'diningtable';'dog';'horse';'motorbike';'person';'pottedplant';'sheep';'sofa';'train';'tvmonitor'};
-            
+function bboxes = tracker(targetPosition, targetSize, imgFiles)
+          
 %TRACKER
 %   is the main function that performs the tracking loop
 %   Default parameters are overwritten by VARARGIN
@@ -72,7 +70,7 @@ legends = {'aeroplane';'bicycle';'bird';'boat';'bottle';'bus';'car';'cat';'chair
     % get the first frame of the video
     
  %   im = gpuArray(single(imgFiles{startFrame}));
-    im = imresize(imgFiles{startFrame},[600, 800]);
+    im = imresize(imgFiles{startFrame},[450, 800]);
     im = gpuArray(im);
  %   im = imresize(im,[600,800]);
     % if grayscale repeat one channel to match filters size
@@ -127,17 +125,12 @@ legends = {'aeroplane';'bicycle';'bird';'boat';'bottle';'bus';'car';'cat';'chair
     end
     
     bboxes = zeros(nImgs, numDet, 4);
-    % start tracking
-    tic;colors_candidate = colormap('hsv');
-            colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/20)):end, :);
-            colors_candidate = mat2cell(colors_candidate, ones(size(colors_candidate, 1), 1))';
-            colors = colors_candidate;
-                                                             
+                                                           
     for i = startFrame:nImgs
         if i>startFrame
             % load new frame on GPU
             %im = gpuArray(single(imgFiles{i}));
-            im = imresize(imgFiles{i},[600, 800]);
+            im = imresize(imgFiles{i},[450, 800]);
             im = gpuArray(im);  
             % if grayscale repeat one channel to match filters size
     		if(size(im, 3)==1)
@@ -161,33 +154,17 @@ legends = {'aeroplane';'bicycle';'bird';'boat';'bottle';'bus';'car';'cat';'chair
                 % scale damping and saturation
                 s_x(k,:) = max(min_s_x(k,:), min(max_s_x(k,:), (1-p.scaleLR)*s_x(k,:) + p.scaleLR*scaledInstance(k,newScale)));
                 targetSize(k,:) = (1-p.scaleLR)*targetSize(k,:) + p.scaleLR*[scaledTarget(k,newScale,1) scaledTarget(k,newScale,2)];
-            end
-        else
+           end
+           
+             else
             % at the first frame output position and size passed as input (ground truth)
         end
-
+    
         rectPosition = [[targetPosition(:,2),targetPosition(:,1)] - [targetSize(:,2),targetSize(:,1)] / 2, [targetSize(:,2) , targetSize(:,1)]];
         
-        bboxes(i, :, :)=rectPosition;
-
+            bboxes(i, :, :)=rectPosition;
+       
     end
-        %% Visualization
-        video_path = [p.seq_base_path '/' p.video '/imgs/'];
-        imgs = dir([video_path '*.jpg']);
-            for i=1:nImgs
-
-                img = imread(imgs(i).name);
-                img = imresize(img, [600, 800]);               
-     
-                figure(i)
-                imshow(img)
-                for j=1:numDet
-                    figure(i)
-                    rectangle('Position',bboxes(i,j,:),'LineWidth', 2,'EdgeColor',colors{targetClass(j,1)});
-                    label = sprintf('%s', legends{targetClass(j,1)});
-                    text(double(bboxes(i,j,1))+2, double(bboxes(i,j,2)), label, 'BackgroundColor', 'w');
-                end
-           end
-           drawnow
+   
     save tracker
 end
