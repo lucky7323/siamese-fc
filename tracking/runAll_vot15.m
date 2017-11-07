@@ -30,21 +30,24 @@ scale = fix_width / imsz(2);
 %%
 numImg=length(imgs);    
 ii=1;
+elapse = zeros(numImg, 1);
 while ii<=numImg
-    
     if mod(ii,3)==1
-%        load /home/eunho/vision_project/OD_fromVideo/faster_rcnn/a.mat
-%        targetDet = a;
-%        targetDet=faster_rcnn(imgs(i)); %(a.mat)
         figure(ii);
-        targetDet=script_faster_rcnn_demo(img_files{ii},restart);
-        %targetDet=script_faster_rcnn_demo(imgs{ii},restart);
+        tic;
+        if ii==1
+            %initialization
+            [opts, model, rpn_net, fast_rcnn_net] = faster_init();
+        end
+        targetDet=script_faster_rcnn_demo(img_files{ii}, opts, model, rpn_net, fast_rcnn_net);
+        elapse(ii,1) = toc;
         ii=ii+1;
         drawnow;
     else
         [pos, target_sz, classId]=load_video_info(targetDet);
+        tic;
         bboxes = tracker(pos, target_sz, imgs(ii-1:ii+1), scale);
-        
+        elapse(ii,1) = toc;
  
     %% Visualization
         for i=1:2

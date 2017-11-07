@@ -26,9 +26,9 @@ function net = load_pretrained(netPath, gpu)
     % remove loss layer
     net = remove_layers_from_block(net, 'dagnn.Loss');
     % init specified GPU
-    if ~isempty(gpu)
-       gpuDevice(gpu)
-    end
+%    if ~isempty(gpu)
+%       gpuDevice(gpu)
+%   end
     net.move('gpu');
     net.mode = 'test'; % very important for batch norm, we now use the stats accumulated during training.
 end
