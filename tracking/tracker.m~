@@ -1,5 +1,5 @@
 % -------------------------------------------------------------------------------------------------
-function bboxes = tracker(targetPosition, targetSize, imgFiles, scale)
+function bboxes = tracker(targetPosition, targetSize, imgFiles)
           
 %TRACKER
 %   is the main function that performs the tracking loop
@@ -70,8 +70,8 @@ function bboxes = tracker(targetPosition, targetSize, imgFiles, scale)
     % get the first frame of the video
     
  %   im = gpuArray(single(imgFiles{startFrame}));
- %    im = imgFilse(startFrame);
-    im = imresize(imgFiles{startFrame},scale);
+    
+ %   im = imresize(imgFiles{startFrame},[450, 800]);
     im = gpuArray(im);
  %   im = imresize(im,bboxes[600,800]);
     % if grayscale repeat one channel to match filters size
@@ -131,7 +131,7 @@ function bboxes = tracker(targetPosition, targetSize, imgFiles, scale)
         if i>startFrame
             % load new frame on GPU
             %im = gpuArray(single(imgFiles{i}));
-            im = imresize(imgFiles{i},scale);
+            im = imresize(imgFiles{i},[450, 800]);
             im = gpuArray(im);  
             % if grayscale repeat one channel to match filters size
     		if(size(im, 3)==1)

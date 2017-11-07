@@ -50,8 +50,8 @@ while ii<=numImg
         for i=1:2
             iImg=ii+i-1;
             
-            img = imread(img_files{iImg});
-            %img = imgs{iImg};
+            %img = imread(img_files{iImg});
+            img = imgs{iImg};
             img = imresize(img, scale);               
 
             figure(iImg)
