@@ -27,57 +27,58 @@ fix_width = 800;
 imsz = size(imgs{1});
 scale = fix_width / imsz(2);
 
-%%
+%%=================================================================
+[opts, model, rpn_net, fast_rcnn_net] = faster_init();
+[zFeatId,scoreId,p,net_z,net_x]=siamese_init(scale);
+
+%%=================================================================
+
 numImg=length(imgs);    
 ii=1;
 elapse = zeros(numImg, 1);
+tic;
 while ii<=numImg
     if mod(ii,3)==1
         figure(ii);
         tic;
-        if ii==1
-            %initialization
-            [opts, model, rpn_net, fast_rcnn_net] = faster_init();
-        end
         targetDet=script_faster_rcnn_demo(img_files{ii}, opts, model, rpn_net, fast_rcnn_net);
         elapse(ii,1) = toc;
-        ii=ii+1;
         drawnow;
+        
+        ii=ii+1;
+        
+        [s_x, z_features, pos, target_sz, classId, avgChans]=tracker_z(targetDet, imgs(ii-1), p, net_z, zFeatId);
+        
     else
-        [pos, target_sz, classId]=load_video_info(targetDet);
+%        tic;
+        
+        net_x = load_pretrained([p.net_base_path p.net], []);
+        remove_layers_from_prefix(net_x, p.prefix_z);
+
         tic;
-        bboxes = tracker(pos, target_sz, imgs(ii-1:ii+1), scale);
+        [bboxes, pos, target_sz, s_x] = tracker(pos, target_sz, imgs(ii), p, net_x, scoreId, s_x, z_features, avgChans);
         elapse(ii,1) = toc;
  
-    %% Visualization
-        for i=1:2
-            iImg=ii+i-1;
-            
-            img = imread(img_files{iImg});
-            %img = imgs{iImg};
-            img = imresize(img, scale);               
+        %% Visualization
+        img = imread(img_files{ii});
+        img = imresize(img, scale);               
 
-            figure(iImg)
-            image(img); 
-            axis image;
-            axis off;
-            set(gcf, 'Color', 'white');
-            %imshow(img)
-            for j=1:size(targetDet,1)
-                rectangle('Position',bboxes(i,j,:),'LineWidth', 2,'EdgeColor',colors{classId(j,1)});
-                label = sprintf('%s', legends{classId(j,1)});
-                text(double(bboxes(i,j,1))+2, double(bboxes(i,j,2)), label, 'BackgroundColor', 'w');
-            end
-            drawnow     
-        end          
-        ii=ii+2;   
+        figure(ii)
+        image(img); 
+        axis image;
+        axis off;
+        set(gcf, 'Color', 'white');
+        %imshow(img)
+        for j=1:size(targetDet,1)
+            rectangle('Position',bboxes(j,:),'LineWidth', 2,'EdgeColor',colors{classId(j,1)});
+            label = sprintf('%s', legends{classId(j,1)});
+            text(double(bboxes(j,1))+2, double(bboxes(j,2)), label, 'BackgroundColor', 'w');
+        end
+        drawnow     
+
+        ii=ii+1;   
     end
 end
-
-%    seq={
-%     'test_1030'
-%   };
-%    for s=1:numel(seq)   
-%        bb = run_tracker(seq{s}, visualization);
-%    end
-    
+total_time = toc;
+caffe.reset_all(); 
+clear mex;
