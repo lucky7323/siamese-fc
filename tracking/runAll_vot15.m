@@ -36,7 +36,7 @@ scale = fix_width / imsz(2);
 numImg=length(imgs);    
 ii=1;
 elapse = zeros(numImg, 1);
-tic;
+%tic;
 while ii<=numImg
     if mod(ii,3)==1
         figure(ii);
@@ -47,16 +47,14 @@ while ii<=numImg
         
         ii=ii+1;
         
-        [s_x, z_features, pos, target_sz, classId, avgChans]=tracker_z(targetDet, imgs(ii-1), p, net_z, zFeatId);
-        
+        [s_xz, z_features, pos, target_sz, classId, avgChans]=tracker_z(targetDet, imgs(ii-1), p, net_z, zFeatId);
+        s_x = s_xz;
+ 
     else
 %        tic;
         
-        net_x = load_pretrained([p.net_base_path p.net], []);
-        remove_layers_from_prefix(net_x, p.prefix_z);
-
-        tic;
-        [bboxes, pos, target_sz, s_x] = tracker(pos, target_sz, imgs(ii), p, net_x, scoreId, s_x, z_features, avgChans);
+         tic;
+        [bboxes, pos, target_sz, s_x] = tracker(pos, target_sz, imgs(ii), p, scoreId, s_xz, z_features, avgChans, s_x);
         elapse(ii,1) = toc;
  
         %% Visualization
@@ -79,6 +77,6 @@ while ii<=numImg
         ii=ii+1;   
     end
 end
-total_time = toc;
+%total_time = toc;
 caffe.reset_all(); 
 clear mex;

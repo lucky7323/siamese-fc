@@ -9,7 +9,8 @@ function [zFeatId,scoreId,p,net_z,net_x] = siamese_init(scale)
     p.responseUp = 16; % upsampling the small 17x17 response helps with the accuracy
     p.windowing = 'cosine'; % to penalize large displacements
     p.wInfluence = 0.176; % windowing influence (in convex sum)
-    p.net = '2016-08-17.net.mat';
+%    p.net = '2016-08-17.net.mat';
+    p.net = '2017-11-13.net.mat';
     %% execution, visualization, benchmark
     p.video = 'test_1030';
     p.visualization = false;
@@ -46,7 +47,7 @@ function [zFeatId,scoreId,p,net_z,net_x] = siamese_init(scale)
     
     % Load two copies of the pre-trained network
     net_z = load_pretrained([p.net_base_path p.net], p.gpus);
-    net_x = load_pretrained([p.net_base_path p.net], []);
+    net_x = load_pretrained([p.net_base_path p.net], p.gpus);
     
     % Divide the net in 2
     % exemplar branch (used only once per video) computes features for the target

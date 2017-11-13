@@ -14,6 +14,9 @@ function [net, fixed_label_size] = vid_create_net_small3(varargin)
     opts.weightInitMethod = 'gaussian';
     opts.batchNormalization = false ;
     opts.networkType = 'simplenn' ;
+%%%--------------------
+    opts.strides = [2, 2, 1, 2] ;  %%%%%%%% temp 
+%%%--------------------    
     opts.cudnnWorkspaceLimit = 1024*1024*1024 ; % 1GB
     opts = vl_argparse(opts, varargin) ;
 

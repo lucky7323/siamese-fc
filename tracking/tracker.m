@@ -1,5 +1,5 @@
 % -------------------------------------------------------------------------------------------------
-function [bboxes, targetPosition, targetSize, s_x] = tracker(targetPosition, targetSize, imgFile, p, net_x, scoreId, s_x, z_features, avgChans)       
+function [bboxes, targetPosition, targetSize, s_x] = tracker(targetPosition, targetSize, imgFile, p, scoreId, s_xz, z_features, avgChans, s_x)       
 %TRACKER
 %   is the main function that performs the tracking loop
 %   Default parameters are overwritten by VARARGIN
@@ -8,12 +8,14 @@ function [bboxes, targetPosition, targetSize, s_x] = tracker(targetPosition, tar
 % -------------------------------------------------------------------------------------------------
 % These are the default hyper-params for SiamFC-3S
 % The ones for SiamFC (5 scales) are in params-5s.txt
+    net_x = load_pretrained([p.net_base_path p.net], p.gpus);
+    remove_layers_from_prefix(net_x, p.prefix_z);
 
     numDet = size(targetPosition,1);  %numDet
     bboxes = zeros(numDet, 4);
 
-    min_s_x = 0.2*s_x; %numDet
-    max_s_x = 5*s_x; %numDet
+    min_s_x = 0.2*s_xz; %numDet
+    max_s_x = 5*s_xz; %numDet
 
     switch p.windowing
         case 'cosine'

@@ -12,7 +12,7 @@ function [net, stats] = experiment(imdb_video, varargin)
     opts.init.scale = 1;
     opts.init.weightInitMethod = 'xavierimproved';
     opts.init.initBias = 0.1;
-    opts.expDir = 'data'; % where to save the trained net
+    opts.expDir = '/home/eunho/vision_project/OD_fromVideo/siamese-fc/training/data'; % where to save the trained net
     opts.numFetchThreads = 12; % used by vl_imreadjpg when reading dataset
     opts.validation = 0.1; % fraction of imbd reserved to validation
     opts.exemplarSize = 127; % exemplar (z) in the paper
@@ -25,7 +25,8 @@ function [net, stats] = experiment(imdb_video, varargin)
     opts.randomSeed = 0;
     opts.shuffleDataset = false; % do not shuffle the data to get reproducible experiments
     opts.frameRange = 100; % range from the exemplar in which randomly pick the instance
-    opts.gpus = [];
+%    opts.gpus = [];
+    opts.gpus = 1;
     opts.prefetch = false; % Both get_batch and cnn_train_dag depend on prefetch.
     opts.train.numEpochs = 50;
     opts.train.learningRate = logspace(-2, -5, opts.train.numEpochs);
@@ -51,7 +52,8 @@ function [net, stats] = experiment(imdb_video, varargin)
     % Get ImageNet Video metadata
     if isempty(imdb_video)
         fprintf('loading imdb video...\n');
-        imdb_video = load(opts.imdbVideoPath);
+        tmp_imdb = load(opts.imdbVideoPath);
+        imdb_video = tmp_imdb.imdb_video;
     end
 
     % Load dataset statistics
@@ -109,6 +111,7 @@ function [rgbMean_z, rgbVariance_z, rgbMean_x, rgbVariance_x] = load_stats(opts)
 % Dataset image statistics for data augmentation
 % -----------------------------------------------------------------------------------------------------
     stats = load(opts.imageStatsPath);
+    stats = stats.stats;
     % Subtracted if opts.subMean is true
     if ~isfield(stats, 'z')
         rgbMean = reshape(stats.rgbMean, [1 1 3]);
@@ -141,7 +144,9 @@ function net = make_net(opts)
     net_dot = net.print(inputs, 'Format', 'dot');
     if ~exist(opts.expDir)
         mkdir(opts.expDir);
+        sprintf('non exist in');
     end
+    sprintf('non exist out');
     f = fopen(fullfile(opts.expDir, 'arch.dot'), 'w');
     fprintf(f, net_dot);
     fclose(f);
