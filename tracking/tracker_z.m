@@ -56,7 +56,6 @@ function [s_x, z_features, targetPosition, targetSize, classId, avgChans] = trac
     % arbitrary scale saturation
 
     % evaluate the offline-trained network for exemplar z features
-    
     for k=1:numDet
         net_z.eval({'exemplar', z_crop(:,:,:,k)});
         z_features_temp = net_z.vars(zFeatId).value;

@@ -38,8 +38,10 @@ scale = fix_width / imsz(2);
 numImg=length(imgs);    
 ii=1;
 elapse = zeros(numImg, 1);
+elapse2 = zeros(numImg, 1);
+
 %tic;
-while ii<=10
+while ii<=numImg
     if mod(ii,3)==1
         figure(ii);
         tic;
@@ -49,13 +51,16 @@ while ii<=10
         
         ii=ii+1;
         
+        tic;
         [s_xz, z_features, pos, target_sz, classId, avgChans]=tracker_z(targetDet, imgs(ii-1), p, net_z, zFeatId);
+        elapse2(ii,1)=toc;
+        
         s_x = s_xz;
  
     else
         
         tic;
-        [bboxes, pos, target_sz, s_x] = tracker(pos, target_sz, imgs(ii), p, scoreId, s_xz, z_features, avgChans, s_x);
+        [bboxes, pos, target_sz, s_x] = tracker(net_x, pos, target_sz, imgs(ii), p, scoreId, s_xz, z_features, avgChans, s_x);
         elapse(ii,1) = toc;
  
         %% Visualization
