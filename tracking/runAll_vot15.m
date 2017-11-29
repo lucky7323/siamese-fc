@@ -1,6 +1,8 @@
-legends = {'aeroplane';'bicycle';'bird';'boat';'bottle';'bus';'car';'cat';'chair';'cow';'diningtable';'dog';'horse';'motorbike';'person';'pottedplant';'sheep';'sofa';'train';'tvmonitor'};
+legends = {'airplane';'antelope';'bear';'bicycle';'bird';'bus';'car';'cattle';'dog';'cat';'elephant';'fox'; ...
+    'giant_panda';'hamster';'horse';'lion';'lizard';'monkey';'motorcycle';'rabbit';'red_panda';'sheep';'snake'; ...
+    'squirrel';'tiger';'train';'turtle';'watercraft';'whale';'zebra'};
 colors_candidate = colormap('hsv');
-colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/20)):end, :);
+colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/30)):end, :);
 colors_candidate = mat2cell(colors_candidate, ones(size(colors_candidate, 1), 1))';
 colors = colors_candidate;
 
@@ -37,7 +39,7 @@ numImg=length(imgs);
 ii=1;
 elapse = zeros(numImg, 1);
 %tic;
-while ii<=numImg
+while ii<=10
     if mod(ii,3)==1
         figure(ii);
         tic;
@@ -51,9 +53,8 @@ while ii<=numImg
         s_x = s_xz;
  
     else
-%        tic;
         
-         tic;
+        tic;
         [bboxes, pos, target_sz, s_x] = tracker(pos, target_sz, imgs(ii), p, scoreId, s_xz, z_features, avgChans, s_x);
         elapse(ii,1) = toc;
  
