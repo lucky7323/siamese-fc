@@ -30,7 +30,8 @@ function [newTargetPosition, bestScale] = tracker_eval(net_x, s_x, scoreId, z_fe
         end
         responseMap = responseMapsUP(:,:,bestScale);
     else
-        responseMap = responseMapsUP;
+        responseMapsUP(:,:,1) = imresize(responseMaps(:,:,1), p.responseUp, 'bicubic');        
+        responseMap = responseMapsUP(:,:,1);
         bestScale = 1;
     end
     % make the response map sum to 1

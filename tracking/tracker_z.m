@@ -1,5 +1,15 @@
 % -------------------------------------------------------------------------------------------------
-function [s_x, z_features, targetPosition, targetSize, classId, avgChans] = tracker_z(targetDet, startImgFile, p,net_z, zFeatId)
+function [s_x, z_features, targetPosition, targetSize, classId, avgChans, net_z] = tracker_z(net_z, targetDet, startImgFile, p, zFeatId)
+%%%%%%%%%%%%%%%%%%%%%
+% net_z = load_pretrained([p.net_base_path p.net], p.gpus);
+        % Divide the net in 2
+    % exemplar branch (used only once per video) computes features for the target
+ %   remove_layers_from_prefix(net_z, p.prefix_x);
+ %   remove_layers_from_prefix(net_z, p.prefix_join);
+ %   remove_layers_from_prefix(net_z, p.prefix_adj);
+    % instance branch computes features for search region x and cross-correlates with z features
+ %   zFeatId = net_z.getVarIndex(p.id_feat_z);
+%%%%%%%%%%%%%%%%%%%%%
 
     index = find(targetDet(:,1));
     numDet = length(index);

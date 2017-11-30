@@ -1,5 +1,5 @@
 % -------------------------------------------------------------------------------------------------
-function [bboxes, targetPosition, targetSize, s_x] = tracker(net_x, targetPosition, targetSize, imgFile, p, scoreId, s_xz, z_features, avgChans, s_x)       
+function [bboxes, targetPosition, targetSize, s_x, net_x] = tracker(net_x, targetPosition, targetSize, imgFile, p, scoreId, z_features, avgChans, s_x)       
 %TRACKER
 %   is the main function that performs the tracking loop
 %   Default parameters are overwritten by VARARGIN
@@ -8,16 +8,15 @@ function [bboxes, targetPosition, targetSize, s_x] = tracker(net_x, targetPositi
 % -------------------------------------------------------------------------------------------------
 % These are the default hyper-params for SiamFC-3S
 % The ones for SiamFC (5 scales) are in params-5s.txt
-
-%    net_x = load_pretrained([p.net_base_path p.net], p.gpus);
-
-%    remove_layers_from_prefix(net_x, p.prefix_z);
+    
+%net_x = load_pretrained([p.net_base_path p.net], []);
+%remove_layers_from_prefix(net_x, p.prefix_z);
 
     numDet = size(targetPosition,1);  %numDet
     bboxes = zeros(numDet, 4);
 
-    min_s_x = 0.2*s_xz; %numDet
-    max_s_x = 5*s_xz; %numDet
+    min_s_x = 0.2*s_x; %numDet
+    max_s_x = 5*s_x; %numDet
 
     switch p.windowing
         case 'cosine'
@@ -43,9 +42,16 @@ function [bboxes, targetPosition, targetSize, s_x] = tracker(net_x, targetPositi
 
     % extract scaled crops for search region x at previous target position
     % x_crops = zeros(p.intanceSize,p.intanceSize,3, p.numScale, numDet,'single');
-    % x_crops = gpuArray(x_crops);
+    % x_crops = gpuArray(x_cronewTargetPositionps);
     for k=1:numDet
-        x_crops = make_scale_pyramid(im, targetPosition(k,:), scaledInstance(k,:), p.instanceSize, avgChans, p.stats, p);
+        %x_crops = make_scale_pyramid(im, targetPosition(k,:), scaledInstance(k,:), p.instanceSize, avgChans, p.stats, p);
+        x_crops = get_subwindow_tracking(im, targetPosition(k,:), [p.instanceSize p.instanceSize]...
+                ,[round(scaledInstance(k,1)) round(scaledInstance(k,1))],avgChans);
+        
+        %x_crops(:,:,:,1) = x_crop;        
+        %x_crops(:,:,:,2) = x_crop;
+        %x_crops(:,:,:,3) = x_crop;
+        
         % evaluate the offline-trained network for exemplar x features
 
         [newTargetPosition, newScale] = tracker_eval(net_x, round(s_x(k,:)), scoreId, z_features(:,:,:,:,k), x_crops, targetPosition(k,:), window, p);

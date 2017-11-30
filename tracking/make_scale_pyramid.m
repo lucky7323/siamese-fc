@@ -1,4 +1,3 @@
-% -----------------------------------------------------------------------------------------------------
 function pyramid = make_scale_pyramid(im, targetPosition, in_side_scaled, out_side, avgChans, stats, p)
 %MAKE_SCALE_PYRAMID
 %   computes a pyramid of re-scaled copies of the target (centered on TARGETPOSITION)
@@ -10,7 +9,6 @@ function pyramid = make_scale_pyramid(im, targetPosition, in_side_scaled, out_si
     pyramid = gpuArray(zeros(out_side, out_side, 3, p.numScale, 'single'));
     max_target_side = in_side_scaled(end);
     min_target_side = in_side_scaled(1);
-%    target_side = in_side_scaled;
     beta = out_side / min_target_side;
     % size_in_search_area = beta * size_in_image
     % e.g. out_side = beta * min_target_side

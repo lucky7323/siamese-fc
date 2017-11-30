@@ -1,3 +1,4 @@
+clear; close all;
 legends = {'airplane';'antelope';'bear';'bicycle';'bird';'bus';'car';'cattle';'dog';'cat';'elephant';'fox'; ...
     'giant_panda';'hamster';'horse';'lion';'lizard';'monkey';'motorcycle';'rabbit';'red_panda';'sheep';'snake'; ...
     'squirrel';'tiger';'train';'turtle';'watercraft';'whale';'zebra'};
@@ -52,15 +53,16 @@ while ii<=numImg
         ii=ii+1;
         
         tic;
-        [s_xz, z_features, pos, target_sz, classId, avgChans]=tracker_z(targetDet, imgs(ii-1), p, net_z, zFeatId);
+        %[zFeatId,scoreId,p,net_z,net_x]=siamese_init(scale);
+        [s_x, z_features, pos, target_sz, classId, avgChans, net_z]=tracker_z(net_z, targetDet, imgs(ii-1), p, zFeatId);
         elapse2(ii,1)=toc;
         
-        s_x = s_xz;
+  %      s_x = s_xz;
  
     else
         
         tic;
-        [bboxes, pos, target_sz, s_x] = tracker(net_x, pos, target_sz, imgs(ii), p, scoreId, s_xz, z_features, avgChans, s_x);
+        [bboxes, pos, target_sz, s_x, net_x] = tracker(net_x, pos, target_sz, imgs(ii), p, scoreId, z_features, avgChans, s_x);
         elapse(ii,1) = toc;
  
         %% Visualization

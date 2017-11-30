@@ -2,15 +2,15 @@
 function [zFeatId,scoreId,p,net_z,net_x] = siamese_init(scale)
     
     p.scale = scale;
-    p.numScale = 3;
+    p.numScale = 1;
     p.scaleStep = 1.0375;
     p.scalePenalty = 0.9745;
     p.scaleLR = 0.59; % damping factor for scale update
     p.responseUp = 16; % upsampling the small 17x17 response helps with the accuracy
     p.windowing = 'cosine'; % to penalize large displacements
     p.wInfluence = 0.176; % windowing influence (in convex sum)
-%    p.net = '2016-08-17.net.mat';
-    p.net = '2017-11-13.net.mat';
+    p.net = '2016-08-17.net.mat';
+%    p.net = '2017-11-13.net.mat';
     %% execution, visualization, benchmark
     p.video = 'test_1030';
     p.visualization = false;
@@ -20,7 +20,7 @@ function [zFeatId,scoreId,p,net_z,net_x] = siamese_init(scale)
     %% Params from the network architecture, have to be consistent with the training
     p.exemplarSize = 127;  % input z size
     p.instanceSize = 255;  % input x size (search region)
-    p.scoreSize = 17;
+    p.scoreSize = 17;%17;
     p.totalStride = 8;
     p.contextAmount = 0.5; % context amount for the exemplar
     p.subMean = false;
