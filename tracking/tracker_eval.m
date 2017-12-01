@@ -1,5 +1,5 @@
 % -------------------------------------------------------------------------------------------------------------------------
-function [newTargetPosition, bestScale] = tracker_eval(net_x, s_x, scoreId, z_features, x_crops, targetPosition, window, p)
+function [newTargetPosition] = tracker_eval(net_x, s_x, scoreId, z_features, x_crops, targetPosition, window, p)
 %TRACKER_STEP
 %   runs a forward pass of the search-region branch of the pre-trained Fully-Convolutional Siamese,
 %   reusing the features of the exemplar z computed at the first frame.
@@ -8,32 +8,31 @@ function [newTargetPosition, bestScale] = tracker_eval(net_x, s_x, scoreId, z_fe
 % -------------------------------------------------------------------------------------------------------------------------
     % forward pass, using the pyramid of scaled crops as a "batch"
     net_x.eval({p.id_feat_z, z_features, 'instance', x_crops});
-    responseMaps = reshape(net_x.vars(scoreId).value, [p.scoreSize p.scoreSize p.numScale]);
-    responseMapsUP = gpuArray(single(zeros(p.scoreSize*p.responseUp, p.scoreSize*p.responseUp, p.numScale)));
+    responseMaps = reshape(net_x.vars(scoreId).value, [p.scoreSize p.scoreSize]);
+    %responseMapsUP = gpuArray(single(zeros(p.scoreSize*p.responseUp, p.scoreSize*p.responseUp)));
     % Choose the scale whose response map has the highest peak
-    if p.numScale>1
-        currentScaleID = ceil(p.numScale/2);
-        bestScale = currentScaleID;
-        bestPeak = -Inf;
-        for s=1:p.numScale
-            if p.responseUp > 1
-                % upsample to improve accuracy
-                responseMapsUP(:,:,s) = imresize(responseMaps(:,:,s), p.responseUp, 'bicubic');
-            else
-                responseMapsUP(:,:,s) = responseMaps(:,:,s);
-            end
-            thisResponse = responseMapsUP(:,:,s);
+   % if p.numScale>1
+   %     currentScaleID = ceil(p.numScale/2);
+   %     bestScale = currentScaleID;
+   %     bestPeak = -Inf;
+   %     for s=1:p.numScale
+   %         if p.responseUp > 1
+   %             % upsample to improve accuracy
+   %             responseMapsUP(:,:,s) = imresize(responseMaps(:,:,s), p.responseUp, 'bicubic');
+   %         else
+   %             responseMapsUP(:,:,s) = responseMaps(:,:,s);
+   %         end
+   %         thisResponse = responseMapsUP(:,:,s);
             % penalize change of scale
-            if s~=currentScaleID, thisResponse = thisResponse * p.scalePenalty; end
-            thisPeak = max(thisResponse(:));
-            if thisPeak > bestPeak, bestPeak = thisPeak; bestScale = s; end
-        end
-        responseMap = responseMapsUP(:,:,bestScale);
-    else
-        responseMapsUP(:,:,1) = imresize(responseMaps(:,:,1), p.responseUp, 'bicubic');        
-        responseMap = responseMapsUP(:,:,1);
-        bestScale = 1;
-    end
+   %         if s~=currentScaleID, thisResponse = thisResponse * p.scalePenalty; end
+   %         thisPeak = max(thisResponse(:));
+   %         if thisPeak > bestPeak, bestPeak = thisPeak; bestScale = s; end
+   %     end
+   %     responseMap = responseMapsUP(:,:,bestScale);
+   % else
+   %     responseMapsUP = imresize(responseMaps(:,:), p.responseUp, 'bicubic');        
+        responseMap = imresize(responseMaps(:,:), p.responseUp, 'bicubic');    
+   % end
     % make the response map sum to 1
     responseMap = responseMap - min(responseMap(:));
     responseMap = responseMap / sum(responseMap(:));

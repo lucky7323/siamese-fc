@@ -1,15 +1,5 @@
 % -------------------------------------------------------------------------------------------------
 function [s_x, z_features, targetPosition, targetSize, classId, avgChans, net_z] = tracker_z(net_z, targetDet, startImgFile, p, zFeatId)
-%%%%%%%%%%%%%%%%%%%%%
-% net_z = load_pretrained([p.net_base_path p.net], p.gpus);
-        % Divide the net in 2
-    % exemplar branch (used only once per video) computes features for the target
- %   remove_layers_from_prefix(net_z, p.prefix_x);
- %   remove_layers_from_prefix(net_z, p.prefix_join);
- %   remove_layers_from_prefix(net_z, p.prefix_adj);
-    % instance branch computes features for search region x and cross-correlates with z features
- %   zFeatId = net_z.getVarIndex(p.id_feat_z);
-%%%%%%%%%%%%%%%%%%%%%
 
     index = find(targetDet(:,1));
     numDet = length(index);
@@ -36,11 +26,10 @@ function [s_x, z_features, targetPosition, targetSize, classId, avgChans, net_z]
     % The ones for SiamFC (5 scales) are in params-5s.txt
     im = imresize(startImgFile{1},p.scale);
     im = gpuArray(im);
- %   im = imresize(im,bboxes[600,800]);
     % if grayscale repeat one channel to match filters size
-	if(size(im, 3)==1)
-        im = repmat(im, [1 1 3]);
-    end
+%	if(size(im, 3)==1)
+%        im = repmat(im, [1 1 3]);
+%    end
     % Init visualization
     
     % get avg for padding
@@ -65,11 +54,12 @@ function [s_x, z_features, targetPosition, targetSize, classId, avgChans, net_z]
     s_x = s_z + 2*pad; %numDet
     % arbitrary scale saturation
 
+    z_features = gpuArray(single(zeros(6, 6, 256, 1,numDet)));
     % evaluate the offline-trained network for exemplar z features
     for k=1:numDet
         net_z.eval({'exemplar', z_crop(:,:,:,k)});
         z_features_temp = net_z.vars(zFeatId).value;
-        z_features(:,:,:,:,k) = repmat(z_features_temp, [1 1 1 p.numScale]);    %numDet
+        z_features(:,:,:,:,k) = repmat(z_features_temp, [1 1 1 1]);    %numDet
     end
     
 end
