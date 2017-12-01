@@ -12,7 +12,7 @@ function []= runAll_vot15(vd, num_idx)
     startup;
     %active_caffe_mex(1,'caffe_faster_rcnn');
 
-    video_path = ['/home/eunho/Downloads/ILSVRC2015/Data/VID/val/' vd '/'];
+    video_path = ['/home/eunho/LARGE_DATASET2/test/' vd '/'];
 
     %load all jpg files in the folder
     img_files = dir([video_path '*.JPEG']);
@@ -113,6 +113,7 @@ function []= runAll_vot15(vd, num_idx)
     fid = fopen('/home/eunho/vision_project/OD_fromVideo/submission.txt', 'a');
     fprintf(fid, '%d %d %.5f %.5f %.5f %.5f %.5f \n', submission');
     fclose(fid);
+    pause(1.0);
     caffe.reset_all(); 
     clear mex;
 end
