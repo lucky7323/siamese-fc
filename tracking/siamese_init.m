@@ -12,7 +12,7 @@ function [zFeatId,scoreId,p,net_z,net_x] = siamese_init(scale)
     p.net = '2016-08-17.net.mat';
 %    p.net = '2017-11-13.net.mat';
     %% execution, visualization, benchmark
-    p.video = 'ILSVRC2015_val_00036010';
+%    p.video = 'ILSVRC2015_val_00036010';
     p.visualization = false;
     p.gpus = 1;
     p.bbox_output = false;
