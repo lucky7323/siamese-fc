@@ -3,16 +3,16 @@ function []= runAll_vot15(vd, num_idx)
     legends = {'airplane';'antelope';'bear';'bicycle';'bird';'bus';'car';'cattle';'dog';'cat';'elephant';'fox'; ...
         'giant_panda';'hamster';'horse';'lion';'lizard';'monkey';'motorcycle';'rabbit';'red_panda';'sheep';'snake'; ...
         'squirrel';'tiger';'train';'turtle';'watercraft';'whale';'zebra'};
-%VISUAL    colors_candidate = colormap('hsv');
-%VISUAL    colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/30)):end, :);
-%VISUAL    colors_candidate = mat2cell(colors_candidate, ones(size(colors_candidate, 1), 1))';
-%VISUAL    colors = colors_candidate;
+%v     colors_candidate = colormap('hsv');
+%v     colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/30)):end, :);
+%v     colors_candidate = mat2cell(colors_candidate, ones(size(colors_candidate, 1), 1))';
+%v     colors = colors_candidate;
 
     restart = 1;
     startup;
     %active_caffe_mex(1,'caffe_faster_rcnn');
 
-    video_path = ['/home/eunho/LARGE_DATASET2/test/' vd '/'];
+    video_path = ['/home/eunho/LARGE_DATASET2/val6/' vd '/'];
 
     %load all jpg files in the folder
     img_files = dir([video_path '*.JPEG']);
@@ -45,14 +45,14 @@ function []= runAll_vot15(vd, num_idx)
     %tic;
     submission = [];
     while ii<=numImg
-        if mod(ii,3)==1
-%            figure(ii);
+        if mod(ii,6)==1
+%v            figure(ii);
             tic;
             % bbDet(i,:) = (xmin, ymin, xmax, ymax) 
             targetDet=script_faster_rcnn_demo(img_files{ii}, opts, model, rpn_net, fast_rcnn_net);
             elapse(ii,1) = toc;
             drawnow;
-
+            
             if size(targetDet)~=0
                 bbDet = [];
                 tmp = targetDet(:,1:4) / scale;
@@ -61,7 +61,7 @@ function []= runAll_vot15(vd, num_idx)
                 bbDet(:,5) = tmp(:,1) + tmp(:,3);
                 bbDet(:,6) = tmp(:,2) + tmp(:,4);
                 bbDet(:,1:2) = targetDet(:,5:6);
-                submission = [submission; ones(size(bbDet,1),1)*(ii + num_idx - numImg) bbDet];
+                submission = [submission; ones(size(bbDet,1),1)*(ii + num_idx - numImg) bbDet ones(size(bbDet,1),1)];
             end
             
             tic;
@@ -87,14 +87,14 @@ function []= runAll_vot15(vd, num_idx)
                 bbDet2(:,5) = tmp(:,1) + tmp(:,3);
                 bbDet2(:,6) = tmp(:,2) + tmp(:,4);
                 bbDet2(:,1:2) = targetDet(:,5:6);
-                submission = [submission; ones(size(bbDet2,1),1)*(ii + num_idx - numImg) bbDet2];
+                submission = [submission; ones(size(bbDet2,1),1)*(ii + num_idx - numImg) bbDet2 ones(size(bbDet2,1),1)*2];
                 end
             
             %% Visualization
 %             img = imread(img_files{ii});
 %             img = imresize(img, scale);               
 %     
-%             figure(ii)
+% %            figure(ii)
 %             image(img); 
 %             axis image;
 %             axis off;
@@ -106,14 +106,16 @@ function []= runAll_vot15(vd, num_idx)
 %                 text(double(bboxes(j,1))+2, double(bboxes(j,2)), label, 'BackgroundColor', 'w');
 %             end
 %             drawnow     
-% 
+
+
              ii=ii+1;   
         end
     end
-    fid = fopen('/home/eunho/vision_project/OD_fromVideo/submission.txt', 'a');
-    fprintf(fid, '%d %d %.5f %.5f %.5f %.5f %.5f \n', submission');
+    fid = fopen('/home/eunho/vision_project/OD_fromVideo/V6submission.txt', 'a');
+    fprintf(fid, '%d %d %.4f %.3f %.3f %.3f %.3f %d\n', submission');
     fclose(fid);
-    pause(1.0);
+%    pause(1.0);
     caffe.reset_all(); 
     clear mex;
+    sprintf('%s',vd)
 end
