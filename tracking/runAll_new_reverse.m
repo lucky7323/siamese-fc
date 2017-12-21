@@ -1,24 +1,23 @@
-function []= runAll_vot15(vd, num_idx)
+function []= runAll_new_reverse(vd, num_idx, opts, model, rpn_net, fast_rcnn_net)
     close all;
     legends = {'airplane';'antelope';'bear';'bicycle';'bird';'bus';'car';'cattle';'dog';'cat';'elephant';'fox'; ...
         'giant_panda';'hamster';'horse';'lion';'lizard';'monkey';'motorcycle';'rabbit';'red_panda';'sheep';'snake'; ...
         'squirrel';'tiger';'train';'turtle';'watercraft';'whale';'zebra'};
-%v     colors_candidate = colormap('hsv');
-%v     colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/30)):end, :);
-%v     colors_candidate = mat2cell(colors_candidate, ones(size(colors_candidate, 1), 1))';
-%v     colors = colors_candidate;
+%v      colors_candidate = colormap('hsv');
+%v      colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/30)):end, :);
+%v      colors_candidate = mat2cell(colors_candidate, ones(size(colors_candidate, 1), 1))';
+%v      colors = colors_candidate;
 
-    restart = 1;
-    startup;
     %active_caffe_mex(1,'caffe_faster_rcnn');
 
-    video_path = ['/home/eunho/LARGE_DATASET2/test1/' vd '/'];
+    video_path = ['/home/eunho/LARGE_DATASET2/test5/' vd '/'];
 
     %load all jpg files in the folder
     img_files = dir([video_path '*.JPEG']);
     assert(~isempty(img_files), 'No image files to load.')
     img_files = sort({img_files.name});
-
+    img_files = img_files(:,end:-1:1);
+    
     %eliminate frame 0 if it exists, since frames should only start at 1
     img_files(strcmp('00000000.JPEG', img_files)) = [];
     img_files = strcat(video_path, img_files);
@@ -32,7 +31,7 @@ function []= runAll_vot15(vd, num_idx)
     scale = fix_width / imsz(2);
 
     %%=================================================================
-    [opts, model, rpn_net, fast_rcnn_net] = faster_init();
+%    [opts, model, rpn_net, fast_rcnn_net] = faster_init();
     [zFeatId,scoreId,p,net_z,net_x]=siamese_init(scale);
 
     %%=================================================================
@@ -61,7 +60,7 @@ function []= runAll_vot15(vd, num_idx)
                 bbDet(:,5) = tmp(:,1) + tmp(:,3);
                 bbDet(:,6) = tmp(:,2) + tmp(:,4);
                 bbDet(:,1:2) = targetDet(:,5:6);
-                submission = [submission; ones(size(bbDet,1),1)*(ii + num_idx - numImg) bbDet ones(size(bbDet,1),1)];
+                submission = [submission; ones(size(bbDet,1),1)*(num_idx - ii + 1) bbDet ones(size(bbDet,1),1)];
             end
             
             tic;
@@ -87,35 +86,35 @@ function []= runAll_vot15(vd, num_idx)
                 bbDet2(:,5) = tmp(:,1) + tmp(:,3);
                 bbDet2(:,6) = tmp(:,2) + tmp(:,4);
                 bbDet2(:,1:2) = targetDet(:,5:6);
-                submission = [submission; ones(size(bbDet2,1),1)*(ii + num_idx - numImg) bbDet2 ones(size(bbDet2,1),1)*2];
+                submission = [submission; ones(size(bbDet2,1),1)*(num_idx - ii + 1) bbDet2 ones(size(bbDet2,1),1)*2];
                 end
             
             %% Visualization
-%             img = imread(img_files{ii});
-%             img = imresize(img, scale);               
-%     
-% %            figure(ii)
-%             image(img); 
-%             axis image;
-%             axis off;
-%             set(gcf, 'Color', 'white');
-%     
-%             for j=1:size(targetDet,1)
-%                 rectangle('Position',bboxes(j,:),'LineWidth', 2,'EdgeColor',colors{classId(j,1)});
-%                 label = sprintf('%s : %.3f', legends{classId(j,1)}, targetDet(j,6));
-%                 text(double(bboxes(j,1))+2, double(bboxes(j,2)), label, 'BackgroundColor', 'w');
-%             end
-%             drawnow     
+%              img = imread(img_files{ii});
+%              img = imresize(img, scale);               
+%      
+%  %            figure(ii)
+%              image(img); 
+%              axis image;
+%              axis off;
+%              set(gcf, 'Color', 'white');
+%      
+%              for j=1:size(targetDet,1)
+%                  rectangle('Position',bboxes(j,:),'LineWidth', 2,'EdgeColor',colors{classId(j,1)});
+%                  label = sprintf('%s : %.3f', legends{classId(j,1)}, targetDet(j,6));
+%                  text(double(bboxes(j,1))+2, double(bboxes(j,2)), label, 'BackgroundColor', 'w');
+%              end
+%              drawnow     
 
 
              ii=ii+1;   
         end
     end
-    fid = fopen('/home/eunho/vision_project/OD_fromVideo/V2submission.txt', 'a');
+    fid = fopen('/home/eunho/vision_project/OD_fromVideo/TR2submissionTh5.txt', 'a');
     fprintf(fid, '%d %d %.4f %.3f %.3f %.3f %.3f %d\n', submission');
     fclose(fid);
 %    pause(1.0);
-    caffe.reset_all(); 
-    clear mex;
+%    caffe.reset_all(); 
+%    clear mex;
     sprintf('%s',vd)
 end

@@ -12,7 +12,7 @@ function []= Copy_of_runAll_vot15(vd, num_idx, opts, model, rpn_net, fast_rcnn_n
 %    startup;
     %active_caffe_mex(1,'caffe_faster_rcnn');
 
-    video_path = ['/home/eunho/LARGE_DATASET2/test5/' vd '/'];
+    video_path = ['/home/eunho/LARGE_DATASET2/test23/' vd '/'];
 
     %load all jpg files in the folder
     img_files = dir([video_path '*.JPEG']);

@@ -1,18 +1,16 @@
-function []= runAll_vot15(vd, num_idx)
+function []= runAll_new(vd, num_idx, opts, model, rpn_net, fast_rcnn_net)
     close all;
     legends = {'airplane';'antelope';'bear';'bicycle';'bird';'bus';'car';'cattle';'dog';'cat';'elephant';'fox'; ...
         'giant_panda';'hamster';'horse';'lion';'lizard';'monkey';'motorcycle';'rabbit';'red_panda';'sheep';'snake'; ...
         'squirrel';'tiger';'train';'turtle';'watercraft';'whale';'zebra'};
-%v     colors_candidate = colormap('hsv');
-%v     colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/30)):end, :);
-%v     colors_candidate = mat2cell(colors_candidate, ones(size(colors_candidate, 1), 1))';
-%v     colors = colors_candidate;
+     colors_candidate = colormap('hsv');
+     colors_candidate = colors_candidate(1:(floor(size(colors_candidate, 1)/30)):end, :);
+     colors_candidate = mat2cell(colors_candidate, ones(size(colors_candidate, 1), 1))';
+     colors = colors_candidate;
 
-    restart = 1;
-    startup;
     %active_caffe_mex(1,'caffe_faster_rcnn');
 
-    video_path = ['/home/eunho/LARGE_DATASET2/test/' vd '/'];
+    video_path = ['/home/eunho/LARGE_DATASET2/test1/' vd '/'];
 
     %load all jpg files in the folder
     img_files = dir([video_path '*.JPEG']);
@@ -32,7 +30,6 @@ function []= runAll_vot15(vd, num_idx)
     scale = fix_width / imsz(2);
 
     %%=================================================================
-    [opts, model, rpn_net, fast_rcnn_net] = faster_init();
     [zFeatId,scoreId,p,net_z,net_x]=siamese_init(scale);
 
     %%=================================================================
@@ -61,7 +58,7 @@ function []= runAll_vot15(vd, num_idx)
                 bbDet(:,5) = tmp(:,1) + tmp(:,3);
                 bbDet(:,6) = tmp(:,2) + tmp(:,4);
                 bbDet(:,1:2) = targetDet(:,5:6);
-                submission = [submission; ones(size(bbDet,1),1)*(ii + num_idx - numImg) bbDet 1];
+                submission = [submission; ones(size(bbDet,1),1)*(ii + num_idx - numImg) bbDet];
             end
             
             tic;
@@ -87,35 +84,32 @@ function []= runAll_vot15(vd, num_idx)
                 bbDet2(:,5) = tmp(:,1) + tmp(:,3);
                 bbDet2(:,6) = tmp(:,2) + tmp(:,4);
                 bbDet2(:,1:2) = targetDet(:,5:6);
-                submission = [submission; ones(size(bbDet2,1),1)*(ii + num_idx - numImg) bbDet2 2];
+                submission = [submission; ones(size(bbDet2,1),1)*(ii + num_idx - numImg) bbDet2];
                 end
             
             %% Visualization
-%             img = imread(img_files{ii});
-%             img = imresize(img, scale);               
-%     
-% %            figure(ii)
-%             image(img); 
-%             axis image;
-%             axis off;
-%             set(gcf, 'Color', 'white');
-%     
-%             for j=1:size(targetDet,1)
-%                 rectangle('Position',bboxes(j,:),'LineWidth', 2,'EdgeColor',colors{classId(j,1)});
-%                 label = sprintf('%s : %.3f', legends{classId(j,1)}, targetDet(j,6));
-%                 text(double(bboxes(j,1))+2, double(bboxes(j,2)), label, 'BackgroundColor', 'w');
-%             end
-%             drawnow     
+             img = imread(img_files{ii});
+             img = imresize(img, scale);               
+     
+ %            figure(ii)
+             image(img); 
+             axis image;
+             axis off;
+             set(gcf, 'Color', 'white');
+     
+             for j=1:size(targetDet,1)
+                 rectangle('Position',bboxes(j,:),'LineWidth', 2,'EdgeColor',colors{classId(j,1)});
+                 label = sprintf('%s : %.3f', legends{classId(j,1)}, targetDet(j,6));
+                 text(double(bboxes(j,1))+2, double(bboxes(j,2)), label, 'BackgroundColor', 'w');
+             end
+             drawnow     
 
 
              ii=ii+1;   
         end
     end
-    fid = fopen('/home/eunho/vision_project/OD_fromVideo/V6submission.txt', 'a');
-    fprintf(fid, '%d %d %.5f %.5f %.5f %.5f %.5f \n', submission');
+    fid = fopen('/home/eunho/vision_project/OD_fromVideo/submission_test.txt', 'a');
+    fprintf(fid, '%d %d %.4f %.3f %.3f %.3f %.3f\n', submission');
     fclose(fid);
-%    pause(1.0);
-    caffe.reset_all(); 
-    clear mex;
     sprintf('%s',vd)
 end
